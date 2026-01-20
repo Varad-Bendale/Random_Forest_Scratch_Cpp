@@ -21,7 +21,12 @@ bool isnum (string datapart){
      }
      for (int i = 0 ; i < datapart.size() ; i++ ){
      char st = datapart[i] ; 
+     if (i == 0 ){
      if ( isdigit(st) ==  0 && st != '-' && st != '.') {
+        return false ; 
+     }
+    }
+     if ( isdigit(st) ==  0 && st != '.' ) {
         return false ; 
      }
      }
@@ -30,17 +35,24 @@ bool isnum (string datapart){
 
 
  vector<vector<float>> data() {
-   unordered_map<string,float>hash   ; 
+   vector<unordered_map<string,float>>hash   ; 
+    
    string line  ;
    vector<vector<float>>data ; 
-   float code  = 0.0 ; 
+   vector<float> code  ; 
    ifstream file("data.csv");
+    bool first = false ; 
     while (getline(file, line)) {
      stringstream ss(line);
      string datapart;
       vector<float> row ;
       bool skip = false;  
+      int i = 0 ; 
      while (getline(ss, datapart, ',')) {
+        if (first == false){
+             hash.push_back(unordered_map<string,float>()); 
+            code.push_back(0.0);
+        }
         if (datapart.size() == 0 ){
             skip = true ; 
             break ; 
@@ -49,13 +61,13 @@ bool isnum (string datapart){
             row.push_back(stof(datapart)) ;
         }
         else {
-            if (hash.count(datapart)  == 0 ){
-                code = code + 1.0 ; 
-                hash[datapart] = code  ; 
+            if (hash[i].count(datapart)  == 0 ){
+                code[i] = code[i] + 1.0 ; 
+                hash[i][datapart] = code[i]  ; 
                 row.push_back(code) ; 
             }
             else {
-                row.push_back(hash[datapart])  ; 
+                row.push_back(hash[i][datapart])  ; 
             }
 
         }
@@ -75,6 +87,9 @@ float gini_impurity_subtree(vector<float>&counts ){
     for(int i  = 0 ; i< n ; i++){
      sum = sum + counts[i] ; 
     }
+    if (sum == 0.0){
+        return 0.0 ; 
+    }
     for(int i = 0 ; i < n ; i++){
      gini = gini + pow(counts[i]/sum , 2) ; 
     }
@@ -86,18 +101,24 @@ float gini_impurity_subtree(vector<float>&counts ){
 vector<float> gini_impurity_tree(vector<float> &right_subtree , vector<float>& left_subtree){
     int n = right_subtree.size() ; 
     vector<float>ans ; 
-    float r ; 
+    float r = 0.0 ; 
     for (int i = 0 ; i< n ; i++  ){
     r = r + right_subtree[i] ; 
     }
-    float l ; 
+    float l = 0.0 ; 
     int m = left_subtree.size() ;
     for (int i = 0 ; i< m ; i++ ){
         l = l + left_subtree[i] ; 
     }
+    float tot = r+l ; 
+    if (tot == 0.0) {             
+        ans.push_back(0.0);
+        ans.push_back(0.0);
+        ans.push_back(0.0);
+        return ans;
+    }
     float right = gini_impurity_subtree(right_subtree) ; 
     float left = gini_impurity_subtree(left_subtree) ; 
-    float tot = r+l ; 
     float gini_final = (r/tot)*(right) + (l/tot)*(left ) ; 
     ans.push_back(gini_final) ; 
     ans.push_back(left) ;
@@ -113,14 +134,27 @@ vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , in
     unordered_map<float , float > hash_right ; 
     vector<float>left ; 
     vector<float>right ; 
-    float num ; 
+    float num = 0.0  ; 
     float gini = 100 ; 
     vector<float> gini_imp ; 
     int position  = 0  ; 
-    float gini_end ; 
+    float gini_end = 0.0  ; 
     float gini_cmp ; 
-
+    float gini_left  = 0.0 ;  
+    float gini_right = 0.0;
     int m = pr.size() ; 
+
+
+    if (pos.size() == 0) {
+        smallest_gini_imp.push_back(0.0);
+        smallest_gini_imp.push_back(0);
+        smallest_gini_imp.push_back(100.0);
+        smallest_gini_imp.push_back(0.0);
+        smallest_gini_imp.push_back(0.0);
+        return smallest_gini_imp;
+    }
+
+
     for (int i = 0 ; i< pos.size() ; i++ ){
      hash_left.clear();
      hash_right.clear();
@@ -134,14 +168,15 @@ vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , in
      hash_right[pr[j].second] = hash_right[pr[j].second] + 1.0 ; 
      }
      int n = target_things.size() ; 
-     for (int i = 0 ; i< n ;i++){
-        left.push_back(hash_left[target_things[i]]) ; 
-        right.push_back(hash_right[target_things[i]]) ; 
+     for (int k = 0 ; k< n ;k++){
+        left.push_back(hash_left[target_things[k]]) ; 
+        right.push_back(hash_right[target_things[k]]) ; 
      }
      gini_imp = gini_impurity_tree(right  , left) ; 
      gini_cmp = gini_imp[0] ; 
-     gini = min(gini ,gini_cmp ) ; 
-     if (gini == gini_cmp) {
+
+     if (gini > gini_cmp) {
+      gini = gini_cmp ;
       num = pos[i].first  ; 
       position = pos[i].second ; 
       gini_end = gini_cmp ; 
@@ -158,7 +193,7 @@ vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , in
 
 }
 
-
+=============================
 vector<float> perfect_variable(vector<vector<float>>data){
     int n = data.size() ; 
     vector<float>target = data[n-1]  ; 
