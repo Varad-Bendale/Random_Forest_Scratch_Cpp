@@ -7,6 +7,12 @@
 #include<algorithm>
 using namespace std;
 
+struct LeafNode {
+    LeafNode*left ; 
+    LeafNode* right  ; 
+    float value  ; 
+};
+
 
 struct TreeNode {
   TreeNode* left;
@@ -64,7 +70,7 @@ bool isnum (string datapart){
             if (hash[i].count(datapart)  == 0 ){
                 code[i] = code[i] + 1.0 ; 
                 hash[i][datapart] = code[i]  ; 
-                row.push_back(code) ; 
+                row.push_back(code[i]) ; 
             }
             else {
                 row.push_back(hash[i][datapart])  ; 
@@ -101,20 +107,35 @@ float gini_impurity_subtree(vector<float>&counts ){
 vector<float> gini_impurity_tree(vector<float> &right_subtree , vector<float>& left_subtree){
     int n = right_subtree.size() ; 
     vector<float>ans ; 
+    float max_right  = 0.0 ; 
     float r = 0.0 ; 
+     int a  = 0 ; 
+    int b = 0 ; 
     for (int i = 0 ; i< n ; i++  ){
     r = r + right_subtree[i] ; 
+    max_right = max(max_right ,right_subtree[i] ) ;
+    if (max_right == right_subtree[i]){
+           a = i  ; 
+    }
     }
     float l = 0.0 ; 
     int m = left_subtree.size() ;
-    for (int i = 0 ; i< m ; i++ ){
-        l = l + left_subtree[i] ; 
+    float max_left = 0.0 ;
+    for (int j = 0 ; j< m ; j++ ){
+        l = l + left_subtree[j] ; 
+        max_left = max(max_left ,left_subtree[j] ) ;
+        if (max_left == left_subtree[j]){
+           b = j  ; 
+        }
     }
     float tot = r+l ; 
     if (tot == 0.0) {             
         ans.push_back(0.0);
         ans.push_back(0.0);
         ans.push_back(0.0);
+        ans.push_back(0.0) ;
+        ans.push_back(0.0) ;  
+        
         return ans;
     }
     float right = gini_impurity_subtree(right_subtree) ; 
@@ -122,7 +143,9 @@ vector<float> gini_impurity_tree(vector<float> &right_subtree , vector<float>& l
     float gini_final = (r/tot)*(right) + (l/tot)*(left ) ; 
     ans.push_back(gini_final) ; 
     ans.push_back(left) ;
-    ans.push_back(right) ;  
+    ans.push_back(right) ; 
+    ans.push_back((float)a) ; 
+    ans.push_back((float)b) ;  
 
     return ans ; 
 }
@@ -143,6 +166,8 @@ vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , in
     float gini_left  = 0.0 ;  
     float gini_right = 0.0;
     int m = pr.size() ; 
+    float left_leaf = 0.0 ; 
+    float right_leaf = 0.0 ; 
 
 
     if (pos.size() == 0) {
@@ -182,6 +207,8 @@ vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , in
       gini_end = gini_cmp ; 
       gini_left = gini_imp[1] ; 
       gini_right = gini_imp[2] ; 
+      left_leaf = target_things[(int)gini_imp[4]] ; 
+      right_leaf = target_things[(int)gini_imp[3]] ; 
      }
     }
         smallest_gini_imp.push_back(num)  ; 
@@ -189,15 +216,19 @@ vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , in
         smallest_gini_imp.push_back(gini_end)  ; 
         smallest_gini_imp.push_back(gini_left) ; 
         smallest_gini_imp.push_back(gini_right) ; 
+        smallest_gini_imp.push_back(left_leaf) ; 
+        smallest_gini_imp.push_back(right_leaf) ; 
   return smallest_gini_imp ; 
 
 }
-
-=============================
+vector<vector<float>>leaf_info ; 
 vector<float> perfect_variable(vector<vector<float>>data){
     int n = data.size() ; 
+    vector<float>row  ; 
     vector<float>target = data[n-1]  ; 
     float variable_pos  ; 
+    float left_leaf = 0.0 ; 
+    float right_leaf = 0.0 ; 
     float thresh_data_loc ; 
     vector<float>final_ans ; 
     vector<float >target_things  ; 
@@ -230,14 +261,16 @@ vector<float> perfect_variable(vector<vector<float>>data){
          pos.push_back({mid , k+1 }) ; 
         }
         vector<float>vec = get_perfect(pr,pos,target_things ) ; 
-       gini = v2ec[] ;  
+       gini = vec[2] ;  
         if (gini < gini_impurity){
             gini_impurity = gini ; 
             num = vec[0] ; 
             variable_pos = (float)i ;
             thresh_data_loc = vec[1] ; 
             gini_left = vec[3] ; 
-            gini_right = vec[4]
+            gini_right = vec[4] ; 
+            left_leaf = vec[5] ; 
+            right_leaf = vec[6] ; 
         }
     }
  final_ans.push_back(gini_impurity  ) ; 
@@ -246,6 +279,10 @@ vector<float> perfect_variable(vector<vector<float>>data){
  final_ans.push_back(thresh_data_loc ) ;
  final_ans.push_back( gini_left ) ; 
  final_ans.push_back(gini_right ) ;
+ row.push_back( num ) ;
+ row.push_back( left_leaf ) ; 
+ row.push_back(right_leaf ) ;
+ leaf_info.push_back(row) ; 
  
 }
 
@@ -298,9 +335,7 @@ int main(){
     vector<vector<float>>data_set = data() ; 
     int size = data_set[0].size() ; 
     rec(data_set , i , size , tree ) ; 
+    leaf(tree , leaf_info) ; 
     return 0 ; 
 }
-
-
-
 
