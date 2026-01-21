@@ -149,11 +149,13 @@ vector<float> gini_impurity_tree(vector<float> &right_subtree , vector<float>& l
 
 
 vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , int>>pos , vector<float>target_things ){
+
+
     vector<float>smallest_gini_imp ; 
-    unordered_map<float , float > hash_left ;
-    unordered_map<float , float > hash_right ; 
-    vector<float>left ; 
-    vector<float>right ; 
+    int m = pr.size() ; 
+    int n = target_things.size() ; 
+    vector<float > hash_left(n,0) ;
+    vector< float > hash_right(n,0) ; 
     float num = 0.0  ; 
     float gini = 100 ; 
     vector<float> gini_imp ; 
@@ -162,7 +164,6 @@ vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , in
     float gini_cmp ; 
     float gini_left  = 0.0 ;  
     float gini_right = 0.0;
-    int m = pr.size() ; 
     float left_leaf = 0.0 ; 
     float right_leaf = 0.0 ; 
 
@@ -177,24 +178,16 @@ vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , in
     }
 
 
+    for (int i = 0 ; i < m ; i++ ){
+     hash_right[pr[i].second] = hash_right[pr[i].second] + 1.0 ; 
+    }
+
+
     for (int i = 0 ; i< pos.size() ; i++ ){
-     hash_left.clear();
-     hash_right.clear();
-     left.clear();
-     right.clear();
      int g = pos[i].second ; 
-     for (int j =  0 ; j < g ;j++){
-     hash_left[pr[j].second] = hash_left[pr[j].second] + 1.0 ; 
-     }
-     for (int j =  g ; j < m ;j++){
-     hash_right[pr[j].second] = hash_right[pr[j].second] + 1.0 ; 
-     }
-     int n = target_things.size() ; 
-     for (int k = 0 ; k< n ;k++){
-        left.push_back(hash_left[target_things[k]]) ; 
-        right.push_back(hash_right[target_things[k]]) ; 
-     }
-     gini_imp = gini_impurity_tree(right  , left) ; 
+     hash_left[pr[g].second] = hash_left[pr[g].second] + 1.0 ; 
+     hash_right[pr[g].second] = hash_right[pr[g].second] - 1.0 ; 
+     gini_imp = gini_impurity_tree(hash_right  , hash_left) ; 
      gini_cmp = gini_imp[0] ; 
 
      if (gini > gini_cmp) {
@@ -218,7 +211,10 @@ vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , in
   return smallest_gini_imp ; 
 
 }
+
+
 unordered_map<float , pair<float , float>>leaf_info ; 
+
 vector<float> perfect_variable(vector<vector<float>>data){
     int n = data.size() ; 
     vector<float>row  ; 
