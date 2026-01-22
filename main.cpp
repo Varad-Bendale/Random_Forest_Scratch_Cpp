@@ -148,8 +148,7 @@ vector<float> gini_impurity_tree(vector<float> &right_subtree , vector<float>& l
 }
 
 
-vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , int>>pos , vector<float>target_things ){
-
+vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , int>>pos , vector<float>target_things){
 
     vector<float>smallest_gini_imp ; 
     int m = pr.size() ; 
@@ -215,98 +214,45 @@ vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , in
 
 unordered_map<float , pair<float , float>>leaf_info ; 
 
-vector<float> perfect_variable(vector<vector<float>>data){
-    int n = data.size() ; 
-    vector<float>row  ; 
-    vector<float>target = data[n-1]  ; 
-    float variable_pos  ; 
-    float left_leaf = 0.0 ; 
-    float right_leaf = 0.0 ; 
-    float thresh_data_loc ; 
-    vector<float>final_ans ; 
-    vector<float >target_things  ; 
-    unordered_map<float , int > tt ; 
-    float gini_left ; 
-    float gini_right ; 
-    for (int i = 0 ; i < target.size() ; i++){
-        if (tt[target[i]] > 0 ){
-            continue ; 
-        }
-        else {
-          target_things.push_back(target[i]) ; 
-          tt[target[i]]++ ; 
-        }
-    }
-     float gini ; 
-     float gini_impurity  = 100 ; 
-     float num ; 
-    for ( int i = 0 ; i< n-1 ; i++){
-        vector<pair<float  , float>> pr ; 
-        for (int j = 0  ; j < data[i].size() ; j++ ){
-            pr.push_back({data[i][j] , target[j]}) ; 
-        }
-        sort(pr.begin() , pr.end()) ; 
-        vector<pair<float  , int>>pos ; 
-        for (int k = 0 ; k< pr.size()-1 ; k++){
-         float   first = pr[k].first ; 
-         float second  = pr[k+1].first ; 
-         float mid  = ( first + second)/2 ; 
-         pos.push_back({mid , k+1 }) ; 
-        }
-        vector<float>vec = get_perfect(pr,pos,target_things ) ; 
-       gini = vec[2] ;  
-        if (gini < gini_impurity){
-            gini_impurity = gini ; 
-            num = vec[0] ; 
-            variable_pos = (float)i ;
-            thresh_data_loc = vec[1] ; 
-            gini_left = vec[3] ; 
-            gini_right = vec[4] ; 
-            left_leaf = vec[5] ; 
-            right_leaf = vec[6] ; 
-        }
-    }
- final_ans.push_back(gini_impurity  ) ; 
- final_ans.push_back( num ) ; 
- final_ans.push_back( variable_pos ) ; 
- final_ans.push_back(thresh_data_loc ) ;
- final_ans.push_back( gini_left ) ; 
- final_ans.push_back(gini_right ) ;
- leaf_info[num] = {left_leaf, right_leaf};
 
-}
-
-vector<vector<vector<float>>> new_dataset( vector<float>prev_data  ,vector<vector<float>> data) {
+pair<vector<vector<pair<float,pair<float,float>>>>>new_dataset( vector<float>prev_data  ,vector<vector<pair<float , pair<float,float>>>>  data) {
     int on_basis = (int)prev_data[2];
     int thresh = (int)prev_data[3];
-    vector<vector<vector<float>>> result;
-    sort(data.begin(), data.end(),
-        [on_basis](vector<float>& a, vector<float>& b) {
-            return a[on_basis] < b[on_basis];
-        });
-
-    vector<vector<float>> left_data(data.begin(), data.begin() + thresh + 1);
-    for (int i = 0; i < left_data.size(); i++) {
-        left_data[i].erase(left_data[i].begin() + on_basis);
+    int m = data[0].size() ; 
+    pair<vector<vector<pair<float , pair<float,float>>>>>result;
+    unordered_map<float , int>left_index ; 
+    unordered_map<float , int >right_index ; 
+    for (int i = 0 ; i < thresh ; i++ ){
+        left_index[data[on_basis][i].second.first]++ ; 
     }
-    vector<vector<float>> right_data(data.begin() + thresh + 1, data.end());
-    for (int i = 0; i < right_data.size(); i++) {
-        right_data[i].erase(right_data[i].begin() + on_basis);
+    for (int i = thresh+1 ; i<  m ; i++){
+        right_index[data[on_basis][i].second.first]++ ; 
+    }
+    vector<vector<pair<float,pair<float,float>>>>left_data ; 
+    vector<vector<pair<float,pair<float,float>>>>right_data ; 
+    for (int i = 0 ; i < data.size() ; i++ ){
+        for (int j = 0 ; j < data[0].size() ; j++ ){
+            if (left_index[data[i][j].second.first] > 0 ){
+                
+            }
+        }
     }
     result.push_back(left_data);
     result.push_back(right_data);
     return result;
 }
 
-void rec(vector<vector<float>>dta , int i  , int n  , TreeNode*tree){
+
+
+void rec(vector<vector<pair<float , pair<float,float>>>>  dta , int i  , int n  , TreeNode*tree){
     if (i > 9 || n == 0 ){
         return  ; 
     }
     vector<float>thing = perfect_variable(dta) ; 
     tree->value = thing[1] ; 
-    vector<vector<vector<float>>>dt  = new_dataset(thing  , dta);
-    vector<vector<float>>left_part = dt[0] ; 
-    vector<vector<float>>right_part = dt[1] ; 
+    pair<vector<vector< pair<float , pair<float,float> > >>>data_sm  = new_dataset(thing  , dta);
+    vector<vector<pair<float , pair<float,float>>>> left_part = data_sm.first  ; 
+    vector<vector<pair<float , pair<float,float>>>> right_part = data_sm.second ; 
     if (thing[4] > 0.01){
     tree->left = new TreeNode();
     rec(left_part , i+1 , n-1 ,  tree->left) ;
@@ -323,8 +269,9 @@ int main(){
     TreeNode* tree = new TreeNode() ; 
     int i  = 0 ; 
     vector<vector<float>>data_set = data() ; 
-    int size = data_set[0].size() ; 
-    rec(data_set , i , size , tree ) ; 
+    vector<vector<pair<float , pair<float,float>>>>  data_new = sorted_dataset(data_set) ; 
+    int size = data_new[0].size() ; 
+    rec(data_new , i , size , tree ) ; 
     leaf(tree , leaf_info) ; 
     return 0 ; 
 }
@@ -353,4 +300,98 @@ void leaf(TreeNode*tree  , unordered_map<float , pair<float , float>>leaf_info )
     }
      leaf(tree->left , leaf_info) ; 
      leaf(tree->right , leaf_info) ; 
+}
+
+
+
+vector<vector<pair<float , pair<float,float>>>> sorted_dataset(vector<vector<float>>data  ){
+    int n = data.size() ; 
+    vector<vector<pair<float , pair<float,float>>>>data_info(n-1) ;
+    int m = data[0].size() ; 
+    float num ;
+    float index ; 
+    float target ; 
+    pair<float,float>temp ; 
+    pair<float,pair<float,float>>temp_data ; 
+
+    for (int i = 0 ;  i< n ; i++){
+        for (int j = 0 ; j < m ; j++ ){
+            num = data[i][j] ; 
+            target = data[n-1][j] ; 
+            temp = {index , target} ; 
+            index = (float)j ; 
+            temp_data = {num,temp} ; 
+            data_info[i].push_back(temp_data) ; 
+        }
+        sort(data_info.begin() , data_info.end()) ;
+    }
+    return data_info ; 
+}
+
+vector<float>target_things ; 
+void unique_target(vector<vector<float>>data){
+int n = data.size() ; 
+vector<float>target = data[n-1]  ; 
+unordered_map<float , int > tt ; 
+for (int i = 0 ; i < target.size() ; i++){
+    
+        if (tt[target[i]] > 0 ){
+            continue ; 
+        }
+        else {
+          target_things.push_back(target[i]) ; 
+          tt[target[i]]++ ; 
+        }
+    }
+}
+
+
+vector<float> perfect_variable(vector<vector<pair<float , pair<float,float>>>> data_new){
+    int n = data_new.size() ; 
+    vector<float>row  ; 
+    float variable_pos  ; 
+    float left_leaf = 0.0 ; 
+    float right_leaf = 0.0 ; 
+    float thresh_data_loc ; 
+    vector<float>final_ans ; 
+    float gini_left ; 
+    float gini_right ; 
+     float gini ; 
+     float gini_impurity  = 100 ; 
+     float num ; 
+
+    for ( int i = 0 ; i< n-1 ; i++){
+        vector<pair<float  , float>> pr ; 
+        for (int j = 0  ; j < data_new[i].size() ; j++ ){
+            pr.push_back({data_new[i][j].first , data_new[i][j].second.second}) ; 
+        }
+        vector<pair<float  , int>>pos ; 
+        for (int k = 0 ; k< pr.size()-1 ; k++){
+         float   first = pr[k].first ; 
+         float second  = pr[k+1].first ; 
+         float mid  = ( first + second)/2 ; 
+         pos.push_back({mid , k+1 }) ; 
+        }
+        vector<float>vec = get_perfect(pr,pos,target_things ) ; 
+       gini = vec[2] ;  
+        if (gini < gini_impurity){
+            gini_impurity = gini ; 
+            num = vec[0] ; 
+            variable_pos = (float)i ;
+            thresh_data_loc = vec[1] ; 
+            gini_left = vec[3] ; 
+            gini_right = vec[4] ; 
+            left_leaf = vec[5] ; 
+            right_leaf = vec[6] ; 
+        }
+    }
+
+ final_ans.push_back(gini_impurity  ) ; 
+ final_ans.push_back( num ) ; 
+ final_ans.push_back( variable_pos ) ; 
+ final_ans.push_back(thresh_data_loc ) ;
+ final_ans.push_back( gini_left ) ; 
+ final_ans.push_back(gini_right ) ;
+ leaf_info[num] = {left_leaf, right_leaf};
+ return final_ans ; 
 }
