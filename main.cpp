@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <utility>
 #include<algorithm>
+#include <variant>
+#include<set>
 using namespace std;
 
 
@@ -50,14 +52,13 @@ bool isnum (string datapart){
 }
 
 
- vector<vector<float>> data() {
+vector<vector<float>> training_data() {
    vector<unordered_map<string,float>>hash   ; 
-    
    string line  ;
    int i = 0 ;
    vector<vector<float>>data ; 
    vector<float> code  ; 
-   ifstream file("data.csv");
+   ifstream file("train_data.csv");
     bool first = false ; 
     while (getline(file, line)) {
      stringstream ss(line);
@@ -98,6 +99,52 @@ bool isnum (string datapart){
 return data ; 
 }
 
+vector<vector<float>> testing_data() {
+   vector<unordered_map<string,float>>hash   ; 
+   string line  ;
+   int i = 0 ;
+   vector<vector<float>>data ; 
+   vector<float> code  ; 
+   ifstream file("testing_data.csv");
+    bool first = false ; 
+    while (getline(file, line)) {
+     stringstream ss(line);
+     string datapart;
+      vector<float> row ;
+      bool skip = false;  
+      int i = 0 ; 
+     while (getline(ss, datapart, ',')) {
+        if (first == false){
+             hash.push_back(unordered_map<string,float>()); 
+            code.push_back(0.0);
+        }
+        if (datapart.size() == 0 ){
+            skip = true ; 
+            break ; 
+        }
+        if (isnum(datapart) == true){
+            row.push_back(stof(datapart)) ;
+        }
+        else {
+            if (hash[i].count(datapart)  == 0 ){
+                code[i] = code[i] + 1.0 ; 
+                hash[i][datapart] = code[i]  ; 
+                row.push_back(code[i]) ; 
+            }
+            else {
+                row.push_back(hash[i][datapart])  ; 
+            }
+
+        }
+        i++ ; 
+        first = true ; 
+    }
+    if (skip == false ){
+        data.push_back(row) ; 
+    }
+} 
+return data ; 
+} 
 
 float gini_impurity_subtree(vector<float>&counts ){
     int n = counts.size() ; 
@@ -272,7 +319,7 @@ pair<vector<vector<pair<float,pair<float,float>>>>, vector<vector<pair<float,pai
 
 
 void rec(vector<vector<pair<float , pair<float,float>>>>  dta , int i  , int n  , TreeNode*tree){
-    if (i > 9 || n == 0 || dta.empty() || dta[0].empty()){
+    if (i > 5 || n == 0 || dta.empty() || dta[0].empty()){
         return  ; 
     }
     vector<float>thing = perfect_variable(dta) ; 
@@ -293,14 +340,10 @@ void rec(vector<vector<pair<float , pair<float,float>>>>  dta , int i  , int n  
 }
 
 
-int main(){
+float decision_trees(vector<vector<pair<float , pair<float,float>>>>  data_new  ){
     TreeNode* tree = new TreeNode() ; 
     int i  = 0 ; 
-    
-    vector<vector<float>>data_set = data() ; 
-    vector<vector<pair<float , pair<float,float>>>>  data_new = sorted_dataset(data_set) ; 
     int size = data_new[0].size() ; 
-    unique_target(data_set);
     rec(data_new , i , size , tree ) ; 
     leaf(tree , leaf_info) ; 
     return 0 ; 
@@ -427,4 +470,78 @@ vector<float> perfect_variable(vector<vector<pair<float , pair<float,float>>>> d
  final_ans.push_back(gini_right ) ;
  leaf_info[num] = {left_leaf, right_leaf};
  return final_ans ; 
+}
+
+
+
+void prepare_data(){
+    vector<string> training_data_title;
+    set<string> test_data_lookup; 
+    vector<string> common_in_both; 
+    
+    ifstream train_data_file("test_data.csv");
+    string line;
+    while(getline(train_data_file, line)) {
+        training_data_title.push_back(line); 
+    }
+    train_data_file.close();
+    
+    ifstream test_data_file("testing_data.csv");
+    string column;
+    while(getline(test_data_file, column)){
+        test_data_lookup.insert(column); 
+    }
+    test_data_file.close();
+    
+    for(string row : training_data_title) {
+        if(test_data_lookup.count(row)) common_in_both.push_back(row);
+    }
+    
+    ofstream out1("test_data.csv");
+    ofstream out2("testing_data.csv");
+    for(string r : common_in_both) {
+        out1 << r << endl;
+        out2 << r << endl;
+    }
+    out1.close();
+    out2.close();
+}
+
+void random_forest(){
+    vector<vector<float>>train_data = training_data() ; 
+    vector<vector<float>>test_data = testing_data() ; 
+    int vairables  = train_data.size() ; 
+    unordered_map<float,int>ans ; 
+    vector<vector<pair<float , pair<float,float>>>>  data_new = sorted_dataset(train_data) ; 
+    unique_target(train_data) ; 
+    unordered_map<vector<float> , int>hash ; 
+    int no_of_trees = 15 ; 
+    unordered_map<float,int>ans ; 
+    int i = 0 ; 
+    int lower_limit ; 
+    int upper_limit ; 
+    while (i < no_of_trees){
+     lower_limit = sqrt(train_data.size()) ; 
+     upper_limit = train_data.size() ;  
+     int no_of_variables = rand() % (upper_limit - lower_limit + 1) + lower_limit ; 
+     vector<float>set_variables ; 
+      while (no_of_variables >  0 ){
+         set_variables.push_back( rand() % (upper_limit  + 1)  ) ; 
+         no_of_variables-- ; 
+      }
+      if (hash[set_variables] > 0 ){
+        i-- ; 
+        continue ; 
+      }
+      hash[set_variables]++ ; 
+      upper_limit = train_data[0].size() /2  ; 
+      int data_first_index = rand() % (upper_limit )   ; 
+      int data_second_index = data_first_index + upper_limit ; 
+      vector<vector<pair<float,pair<float,float>>>> data_for_descion_trees ; 
+      for (int i = 0 ; i < set_variables.size() ; i++ ){
+        data_for_descion_trees.push_back(vector<pair<float, pair<float,float>>>(data_new[set_variables[i]].begin()+data_first_index ,data_new[set_variables[i]].begin() + data_second_index)) ; 
+      }
+      decision_trees(data_for_descion_trees) ; 
+    i++ ; 
+    }
 }
