@@ -477,26 +477,29 @@ vector<float> perfect_variable(vector<vector<pair<float , pair<float,float>>>> d
  return final_ans ; 
 }
 
-void funtion(TreeNode*tree ,TreeNode*index ,  vector<float>test_data , int i = 0  , vector<float>ans ){
+
+
+
+float funtion(TreeNode*tree ,TreeNode*index ,  vector<float>test_data  ){
      float data = test_data[(int)index->value] ; 
      if (tree->left == nullptr && tree->right == nullptr && index == nullptr){
-        ans.push_back(tree->value) ; 
-        return ; 
+        return tree->value  ; 
      }
      if (data >= tree->value  ){
-         funtion(tree->left ,index->left ,  test_data , i = i+1  , ans ) ; 
+         return funtion(tree->left ,index->left ,  test_data    ) ; 
      }
      else {
-         funtion(tree->right , index->right , test_data , i = i+1  , ans ) ; 
+         return funtion(tree->right , index->right , test_data   ) ; 
      }
 }
 
-vector<float> answer(TreeNode*tree , vector<vector<float>>test_data){
-    vector<vector<float>>ans ; 
-    for (int i = 1 ; i < test_data.size() ; i++){
-      vector<float>temp ; 
-      funtion()
+vector<float> answer(TreeNode*tree , TreeNode* index , vector<vector<float>>test_data){
+    vector<float>ans ; 
+    for (int i = 0 ; i < test_data.size() ; i++){
+      vector<float>temp_test_data = test_data[i] ; 
+      ans.push_back(funtion(tree , index , temp_test_data  )) ; 
     }
+    return ans ; 
 }
 
 void prepare_data(){
@@ -504,7 +507,7 @@ void prepare_data(){
     set<string> test_data_lookup; 
     vector<string> common_in_both; 
     
-    ifstream train_data_file("test_data.csv");
+    ifstream train_data_file("training_data.csv");
     string line;
     while(getline(train_data_file, line)) {
         training_data_title.push_back(line); 
@@ -522,7 +525,7 @@ void prepare_data(){
         if(test_data_lookup.count(row)) common_in_both.push_back(row);
     }
     
-    ofstream out1("test_data.csv");
+    ofstream out1("training_data.csv");
     ofstream out2("testing_data.csv");
     for(string r : common_in_both) {
         out1 << r << endl;
@@ -532,7 +535,7 @@ void prepare_data(){
     out2.close();
 }
 
-void bootstrapped_data(){
+vector<float> random_forest(){
     vector<vector<float>>train_data = training_data() ; 
     vector<vector<float>>test_data = testing_data() ; 
     int vairables  = train_data.size() ; 
@@ -541,10 +544,10 @@ void bootstrapped_data(){
     unique_target(train_data) ; 
     unordered_map<vector<float> , int>hash ; 
     int no_of_trees = 15 ; 
-    unordered_map<float,int>ans ; 
     int i = 0 ; 
     int lower_limit ; 
     int upper_limit ; 
+    vector<vector<vector<pair<float,pair<float,float>>>> >data ; 
     while (i < no_of_trees){
      lower_limit = sqrt(train_data.size()) ; 
      upper_limit = train_data.size() ;  
@@ -566,8 +569,32 @@ void bootstrapped_data(){
       for (int i = 0 ; i < set_variables.size() ; i++ ){
         data_for_descion_trees.push_back(vector<pair<float, pair<float,float>>>(data_new[set_variables[i]].begin()+data_first_index ,data_new[set_variables[i]].begin() + data_second_index)) ; 
       }
+      data.push_back(data_for_descion_trees) ; 
     i++ ; 
     }
-    return data_for_descion_trees ; 
-}
 
+
+    vector<vector<float>> pred_ans;
+    for (int i = 0 ; i < data.size() ; i++){
+        pair<TreeNode* , TreeNode*> tree = decision_trees(data[i]) ; 
+        vector<float>ans = answer(tree.first , tree.second , test_data) ;
+        pred_ans.push_back(ans);
+    }
+    
+    vector<float>random_forest_classifier_answer;
+    for (int j = 0; j < test_data.size(); j++){  
+        unordered_map<float, int>hash_data;
+        int maxi = INT_MIN;
+        float ran = 0.0;
+        
+        for (int i = 0; i < pred_ans.size(); i++){  
+            hash_data[pred_ans[i][j]]++;
+            if (hash_data[pred_ans[i][j]] > maxi){
+                maxi = hash_data[pred_ans[i][j]];
+                ran = pred_ans[i][j];
+            }
+        }
+        random_forest_classifier_answer.push_back(ran);
+    }
+    return random_forest_classifier_answer ; 
+}
