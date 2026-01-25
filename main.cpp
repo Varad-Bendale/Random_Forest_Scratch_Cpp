@@ -317,36 +317,41 @@ pair<vector<vector<pair<float,pair<float,float>>>>, vector<vector<pair<float,pai
 }
 
 
-
-void rec(vector<vector<pair<float , pair<float,float>>>>  dta , int i  , int n  , TreeNode*tree){
+pair<TreeNode* , TreeNode* > rec(vector<vector<pair<float , pair<float,float>>>>  dta , int i  , int n  , TreeNode*tree , TreeNode* index ){
     if (i > 5 || n == 0 || dta.empty() || dta[0].empty()){
-        return  ; 
+        return {tree , index} ; 
     }
     vector<float>thing = perfect_variable(dta) ; 
     tree->value = thing[1] ; 
+    index->value = thing[2] ; 
     used_variables[thing[2]]++ ; 
     pair<vector<vector<pair<float,pair<float,float>>>>, vector<vector<pair<float,pair<float,float>>>>>data_sm  = new_dataset(thing  , dta);
     vector<vector<pair<float , pair<float,float>>>> left_part = data_sm.first  ; 
     vector<vector<pair<float , pair<float,float>>>> right_part = data_sm.second ; 
     if (thing[4] > 0.01){
     tree->left = new TreeNode();
-    rec(left_part , i+1 , n-1 ,  tree->left) ;
+    index->left = new TreeNode() ; 
+    rec(left_part , i+1 , n-1 ,  tree->left , index->left) ;
     }
     if (thing[5] > 0.01){ 
      tree->right = new TreeNode();
-    rec(right_part , i+1 , n-1 , tree->right) ; 
+     index->right = new TreeNode() ; 
+    rec(right_part , i+1 , n-1 , tree->right , index->right) ; 
     }
-    return  ; 
+    return  {tree , index} ; 
 }
 
 
-float decision_trees(vector<vector<pair<float , pair<float,float>>>>  data_new  ){
+pair<TreeNode* , TreeNode*> decision_trees(vector<vector<pair<float , pair<float,float>>>>  data_new  ){
     TreeNode* tree = new TreeNode() ; 
+    TreeNode* index = new TreeNode() ; 
+    TreeNode* tree_variables = new TreeNode() ; 
+    TreeNode* index_variables = new TreeNode() ; 
     int i  = 0 ; 
     int size = data_new[0].size() ; 
-    rec(data_new , i , size , tree ) ; 
+     rec(data_new , i , size , tree  , index ) ; 
     leaf(tree , leaf_info) ; 
-    return 0 ; 
+    return {tree , index} ; 
 }
 
 void leaf(TreeNode*tree  , unordered_map<float , pair<float , float>>leaf_info ){
@@ -472,7 +477,27 @@ vector<float> perfect_variable(vector<vector<pair<float , pair<float,float>>>> d
  return final_ans ; 
 }
 
+void funtion(TreeNode*tree ,TreeNode*index ,  vector<float>test_data , int i = 0  , vector<float>ans ){
+     float data = test_data[(int)index->value] ; 
+     if (tree->left == nullptr && tree->right == nullptr && index == nullptr){
+        ans.push_back(tree->value) ; 
+        return ; 
+     }
+     if (data >= tree->value  ){
+         funtion(tree->left ,index->left ,  test_data , i = i+1  , ans ) ; 
+     }
+     else {
+         funtion(tree->right , index->right , test_data , i = i+1  , ans ) ; 
+     }
+}
 
+vector<float> answer(TreeNode*tree , vector<vector<float>>test_data){
+    vector<vector<float>>ans ; 
+    for (int i = 1 ; i < test_data.size() ; i++){
+      vector<float>temp ; 
+      funtion()
+    }
+}
 
 void prepare_data(){
     vector<string> training_data_title;
@@ -507,7 +532,7 @@ void prepare_data(){
     out2.close();
 }
 
-void random_forest(){
+void bootstrapped_data(){
     vector<vector<float>>train_data = training_data() ; 
     vector<vector<float>>test_data = testing_data() ; 
     int vairables  = train_data.size() ; 
@@ -541,7 +566,8 @@ void random_forest(){
       for (int i = 0 ; i < set_variables.size() ; i++ ){
         data_for_descion_trees.push_back(vector<pair<float, pair<float,float>>>(data_new[set_variables[i]].begin()+data_first_index ,data_new[set_variables[i]].begin() + data_second_index)) ; 
       }
-      decision_trees(data_for_descion_trees) ; 
     i++ ; 
     }
+    return data_for_descion_trees ; 
 }
+
