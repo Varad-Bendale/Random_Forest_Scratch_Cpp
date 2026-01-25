@@ -481,7 +481,8 @@ vector<float> perfect_variable(vector<vector<pair<float , pair<float,float>>>> d
 
 
 float funtion(TreeNode*tree ,TreeNode*index ,  vector<float>test_data  ){
-     float data = test_data[(int)index->value] ; 
+    int feature_index = (int) index->value;
+    float data = test_data[feature_index];
      if (tree->left == nullptr && tree->right == nullptr && index == nullptr){
         return tree->value  ; 
      }
@@ -542,32 +543,39 @@ vector<float> random_forest(){
     unordered_map<float,int>ans ; 
     vector<vector<pair<float , pair<float,float>>>>  data_new = sorted_dataset(train_data) ; 
     unique_target(train_data) ; 
-    unordered_map<vector<float> , int>hash ; 
+    unordered_map<float , int>hash ; 
     int no_of_trees = 15 ; 
     int i = 0 ; 
     int lower_limit ; 
     int upper_limit ; 
     vector<vector<vector<pair<float,pair<float,float>>>> >data ; 
     while (i < no_of_trees){
-     lower_limit = sqrt(train_data.size()) ; 
-     upper_limit = train_data.size() ;  
+     lower_limit = sqrt(train_data[0].size()) ; 
+     upper_limit = train_data[0].size() ;  
      int no_of_variables = rand() % (upper_limit - lower_limit + 1) + lower_limit ; 
-     vector<float>set_variables ; 
+     vector<int>set_variables ; 
       while (no_of_variables >  0 ){
-         set_variables.push_back( rand() % (upper_limit  + 1)  ) ; 
-         no_of_variables-- ; 
+          int col = rand() % (upper_limit  + 1)   ; 
+          if (hash[col] == 0 ){
+           set_variables.push_back(col) ; 
+           no_of_variables-- ; 
+           hash[col]++ ;
+          }
       }
-      if (hash[set_variables] > 0 ){
-        i-- ; 
-        continue ; 
-      }
-      hash[set_variables]++ ; 
-      upper_limit = train_data[0].size() /2  ; 
-      int data_first_index = rand() % (upper_limit )   ; 
-      int data_second_index = data_first_index + upper_limit ; 
-      vector<vector<pair<float,pair<float,float>>>> data_for_descion_trees ; 
+
+      upper_limit = train_data[0].size()  ; 
+      vector<vector<pair<float,pair<float,float>>>> data_for_descion_trees_temp ; 
+      vector<vector<pair<float,pair<float,float>>>> data_for_descion_trees; 
+      vector<pair<float,pair<float,float>>>temp ; 
       for (int i = 0 ; i < set_variables.size() ; i++ ){
-        data_for_descion_trees.push_back(vector<pair<float, pair<float,float>>>(data_new[set_variables[i]].begin()+data_first_index ,data_new[set_variables[i]].begin() + data_second_index)) ; 
+        data_for_descion_trees_temp.push_back(data_new[set_variables[i]]) ; 
+      }
+      for (int i = 0 ; i < data_new[0].size() ; i++ ){
+        int boot_row = rand() % data_new.size();
+        for (int j = 0  ; j < set_variables.size() ; j++ ){
+        temp.push_back(data_for_descion_trees_temp[j][boot_row]) ; 
+        }
+        data_for_descion_trees.push_back(temp) ; 
       }
       data.push_back(data_for_descion_trees) ; 
     i++ ; 
@@ -584,7 +592,7 @@ vector<float> random_forest(){
     vector<float>random_forest_classifier_answer;
     for (int j = 0; j < test_data.size(); j++){  
         unordered_map<float, int>hash_data;
-        int maxi = INT_MIN;
+        int maxi = -1;
         float ran = 0.0;
         
         for (int i = 0; i < pred_ans.size(); i++){  
