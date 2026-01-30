@@ -17,9 +17,23 @@ struct TreeNode {
     float value;
     float* leaf_status_left ;
     float*leaf_status_right ;  
+      ~TreeNode() {
+        delete left;
+        delete right;
+        delete leaf_status_left;
+        delete leaf_status_right;
+    }
+    TreeNode() : left(nullptr), right(nullptr), 
+                 leaf_status_left(nullptr), 
+                 leaf_status_right(nullptr), 
+                 value(0.0f) {}
 }; 
 
-unordered_map<float,int>used_variables ; 
+unordered_map<float,int>used_variables ;
+
+vector<float> perfect_variable(vector<vector<pair<float , pair<float,float>>>> data_new);
+void leaf(TreeNode*tree  , unordered_map<float , pair<float , float>>leaf_info);
+unordered_map<float , pair<float , float>>leaf_info;
 
 bool isnum (string datapart){
      if( datapart.size() == 0 ){
@@ -281,9 +295,6 @@ vector<float>get_perfect(vector<pair<float , float>> pr , vector<pair<float , in
 }
 
 
-unordered_map<float , pair<float , float>>leaf_info ; 
-
-
 pair<vector<vector<pair<float,pair<float,float>>>>, vector<vector<pair<float,pair<float,float>>>>>new_dataset( vector<float>prev_data  ,vector<vector<pair<float , pair<float,float>>>>  data) {
     int on_basis = (int)prev_data[2];
     int thresh = (int)prev_data[3];
@@ -536,6 +547,7 @@ void prepare_data(){
     out2.close();
 }
 
+
 vector<float> random_forest(){
     vector<vector<float>>train_data = training_data() ; 
     vector<vector<float>>test_data = testing_data() ; 
@@ -566,12 +578,12 @@ vector<float> random_forest(){
       upper_limit = train_data[0].size()  ; 
       vector<vector<pair<float,pair<float,float>>>> data_for_descion_trees_temp ; 
       vector<vector<pair<float,pair<float,float>>>> data_for_descion_trees; 
-      vector<pair<float,pair<float,float>>>temp ; 
       for (int i = 0 ; i < set_variables.size() ; i++ ){
         data_for_descion_trees_temp.push_back(data_new[set_variables[i]]) ; 
       }
       for (int i = 0 ; i < data_new[0].size() ; i++ ){
-        int boot_row = rand() % data_new.size();
+        int boot_row = rand() % data_new[0].size();
+        vector<pair<float,pair<float,float>>>temp ; 
         for (int j = 0  ; j < set_variables.size() ; j++ ){
         temp.push_back(data_for_descion_trees_temp[j][boot_row]) ; 
         }
@@ -587,6 +599,8 @@ vector<float> random_forest(){
         pair<TreeNode* , TreeNode*> tree = decision_trees(data[i]) ; 
         vector<float>ans = answer(tree.first , tree.second , test_data) ;
         pred_ans.push_back(ans);
+        delete tree.first;   
+        delete tree.second;
     }
     
     vector<float>random_forest_classifier_answer;
