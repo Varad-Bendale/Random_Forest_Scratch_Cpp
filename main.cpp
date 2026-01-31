@@ -121,7 +121,7 @@ vector<vector<float>> testing_data() {
    int i = 0 ;
    vector<vector<float>>data ; 
    vector<float> code  ; 
-   ifstream file("testing_data.csv");
+   ifstream file("test_data.csv");
     bool first = false ; 
     while (getline(file, line)) {
      stringstream ss(line);
